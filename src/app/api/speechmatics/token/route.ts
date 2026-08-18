@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import {
   createSpeechmaticsRealtimeJwt,
   getSpeechmaticsOperatingPoint,
+  getSpeechmaticsRegion,
   getSpeechmaticsRealtimeLanguage,
   getSpeechmaticsRealtimeMaxDelay,
   getSpeechmaticsRealtimeTtlSeconds,
@@ -16,6 +17,7 @@ export async function GET() {
       {
         token,
         url: getSpeechmaticsRealtimeUrl(),
+        region: getSpeechmaticsRegion() ?? "eu",
         language: getSpeechmaticsRealtimeLanguage(),
         maxDelay: getSpeechmaticsRealtimeMaxDelay(),
         ttlSeconds: getSpeechmaticsRealtimeTtlSeconds(),

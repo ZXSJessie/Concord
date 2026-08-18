@@ -91,30 +91,37 @@ export interface DemoCareTask {
   dueAt: string;
 }
 
+function hkTime(offsetMs: number): string {
+  const utc = new Date(Date.now() + offsetMs + 8 * 36e5);
+  return utc.toISOString().replace("Z", "+08:00");
+}
+
+const HOUR = 36e5;
+
 export const demoCareTasks: DemoCareTask[] = [
   {
     id: "task-chan-noon",
     elderId: "elder-chan",
-    scheduledAt: "2026-05-20T12:00:00+08:00",
-    dueAt: "2026-05-21T12:00:00+08:00"
+    scheduledAt: hkTime(-2 * HOUR),
+    dueAt: hkTime(6 * HOUR)
   },
   {
     id: "task-wong-noon",
     elderId: "elder-wong",
-    scheduledAt: "2026-05-20T12:00:00+08:00",
-    dueAt: "2026-05-21T12:00:00+08:00"
+    scheduledAt: hkTime(-1 * HOUR),
+    dueAt: hkTime(2 * HOUR)
   },
   {
     id: "task-chan-overdue",
     elderId: "elder-chan",
-    scheduledAt: "2026-05-18T09:00:00+08:00",
-    dueAt: "2026-05-19T09:00:00+08:00"
+    scheduledAt: hkTime(-27 * HOUR),
+    dueAt: hkTime(-25 * HOUR)
   },
   {
     id: "task-lee-soon",
     elderId: "elder-lee",
-    scheduledAt: "2026-05-20T09:00:00+08:00",
-    dueAt: "2026-05-20T23:00:00+08:00"
+    scheduledAt: hkTime(-26 * HOUR),
+    dueAt: hkTime(-2 * HOUR)
   }
 ];
 

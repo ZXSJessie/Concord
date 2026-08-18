@@ -36,6 +36,11 @@ function formatOverdueLabel(dueAt: string): { label: string; tone: "overdue" | "
   const diffHours = Math.round(Math.abs(diffMs) / 36e5);
 
   if (diffMs < 0) {
+    if (diffHours >= 24) {
+      const days = Math.max(Math.round(diffHours / 24), 1);
+      return { label: `已逾期${days}天`, tone: "overdue" };
+    }
+
     return { label: `已逾期${Math.max(diffHours, 1)}h`, tone: "overdue" };
   }
 
@@ -69,11 +74,24 @@ function getElderAvatarSrc(elder: ElderlyProfile): string {
 
 export function HomeTaskDashboard({ tasks, elders }: HomeTaskDashboardProps) {
   const [showAchievement, setShowAchievement] = useState(false);
-  const [selectedDateIndex, setSelectedDateIndex] = useState(3);
-  const weekDays = useMemo(
-    () => ["五", "六", "日", "一", "二", "三", "四"].map((day, index) => ({ day, date: 18 + index })),
-    []
-  );
+  const [selectedDateIndex, setSelectedDateIndex] = useState(() => {
+    const todayIndex = new Date().getDay();
+    return todayIndex === 0 ? 6 : todayIndex - 1;
+  });
+  const weekDays = useMemo(() => {
+    const today = new Date();
+    const todayIndex = today.getDay();
+    const mondayOffset = todayIndex === 0 ? -6 : 1 - todayIndex;
+    const monday = new Date(today);
+    monday.setHours(0, 0, 0, 0);
+    monday.setDate(monday.getDate() + mondayOffset);
+
+    return ["一", "二", "三", "四", "五", "六", "日"].map((day, index) => {
+      const date = new Date(monday);
+      date.setDate(monday.getDate() + index);
+      return { day, date: date.getDate() };
+    });
+  }, []);
 
   useEffect(() => {
     window.localStorage.removeItem("demo:today-completed");

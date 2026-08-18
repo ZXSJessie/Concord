@@ -164,7 +164,12 @@ export function useSpeechmaticsRecorder({
     }
 
     if (message.message === "Error") {
-      onErrorRef.current?.(message.reason || "語音轉寫失敗");
+      const reason = message.reason || "語音轉寫失敗";
+      const friendly =
+        reason === "not_authorised"
+          ? "Speechmatics 授權失敗：請檢查 API Key，並確認 SPEECHMATICS_REGION 與 SPEECHMATICS_RT_URL 對應帳號區域。"
+          : reason;
+      onErrorRef.current?.(friendly);
       setIsPending(false);
       closeSpeechmaticsClient();
     }
