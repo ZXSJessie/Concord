@@ -3,6 +3,18 @@ import { createSpeechmaticsJWT } from "@speechmatics/auth";
 type SpeechmaticsRegion = "eu" | "usa" | "au";
 type SpeechmaticsOperatingPoint = "standard" | "enhanced";
 
+const REGION_RT_HOSTS: Record<SpeechmaticsRegion, string[]> = {
+  eu: ["eu2.rt.speechmatics.com"],
+  usa: ["usa2.rt.speechmatics.com"],
+  au: ["au2.rt.speechmatics.com"]
+};
+
+const DEFAULT_RT_URLS: Record<SpeechmaticsRegion, string> = {
+  eu: "wss://eu2.rt.speechmatics.com/v2",
+  usa: "wss://usa2.rt.speechmatics.com/v2",
+  au: "wss://au2.rt.speechmatics.com/v2"
+};
+
 function parseNumber(value: string | undefined, fallback: number): number {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
@@ -19,7 +31,29 @@ export function getSpeechmaticsApiKey(): string {
 }
 
 export function getSpeechmaticsRealtimeUrl(): string {
-  return process.env.SPEECHMATICS_RT_URL ?? "wss://eu2.rt.speechmatics.com/v2";
+  const raw = process.env.SPEECHMATICS_RT_URL?.trim();
+  const region = getSpeechmaticsRegion();
+
+  if (raw) {
+    let host = "";
+    try {
+      host = new URL(raw).hostname;
+    } catch {
+      // fall through to canonical URL below
+    }
+
+    if (host && REGION_RT_HOSTS[region ?? "eu"].includes(host)) {
+      return raw;
+    }
+
+    if (host) {
+      console.warn(
+        `SPEECHMATICS_RT_URL host "${host}" does not match SPEECHMATICS_REGION "${region ?? "eu"}", falling back to ${DEFAULT_RT_URLS[region ?? "eu"]}.`
+      );
+    }
+  }
+
+  return DEFAULT_RT_URLS[region ?? "eu"];
 }
 
 export function getSpeechmaticsRealtimeLanguage(): string {

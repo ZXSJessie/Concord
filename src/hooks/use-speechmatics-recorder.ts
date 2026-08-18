@@ -11,6 +11,7 @@ interface SpeechmaticsTokenResponse {
   maxDelay: number;
   ttlSeconds: number;
   operatingPoint: "standard" | "enhanced" | null;
+  region: string;
 }
 
 interface UseSpeechmaticsRecorderOptions {
@@ -37,6 +38,21 @@ function buildTranscript(finalSegments: string[], partialTranscript: string) {
   return [...finalSegments, partialTranscript].filter(Boolean).join("").trim();
 }
 
+function toFriendlySpeechmaticsError(
+  reason: string | undefined,
+  endpoint: { url?: string; region?: string } | null
+): string {
+  if (reason === "not_authorised") {
+    const detail =
+      endpoint && (endpoint.url || endpoint.region)
+        ? `（url: ${endpoint.url}, region: ${endpoint.region}）`
+        : "";
+    return `Speechmatics 授權失敗${detail}：請檢查 API Key，並確認 SPEECHMATICS_REGION 與 SPEECHMATICS_RT_URL 對應帳號區域。`;
+  }
+
+  return reason || "語音轉寫失敗";
+}
+
 export function useSpeechmaticsRecorder({
   onTranscript,
   onError,
@@ -55,6 +71,7 @@ export function useSpeechmaticsRecorder({
   const partialTranscriptRef = useRef("");
   const onTranscriptRef = useRef(onTranscript);
   const onErrorRef = useRef(onError);
+  const speechmaticsEndpointRef = useRef<{ url?: string; region?: string } | null>(null);
 
   const [isSupported, setIsSupported] = useState(true);
   const [isStarting, setIsStarting] = useState(false);
@@ -165,11 +182,7 @@ export function useSpeechmaticsRecorder({
 
     if (message.message === "Error") {
       const reason = message.reason || "語音轉寫失敗";
-      const friendly =
-        reason === "not_authorised"
-          ? "Speechmatics 授權失敗：請檢查 API Key，並確認 SPEECHMATICS_REGION 與 SPEECHMATICS_RT_URL 對應帳號區域。"
-          : reason;
-      onErrorRef.current?.(friendly);
+      onErrorRef.current?.(toFriendlySpeechmaticsError(reason, speechmaticsEndpointRef.current));
       setIsPending(false);
       closeSpeechmaticsClient();
     }
@@ -182,6 +195,11 @@ export function useSpeechmaticsRecorder({
     if (!response.ok || !payload.token) {
       throw new Error(payload.error ?? "獲取 Speechmatics token 失敗。");
     }
+
+    speechmaticsEndpointRef.current = {
+      url: payload.url,
+      region: payload.region
+    };
 
     const client = new RealtimeClient({
       url: payload.url,
@@ -322,7 +340,8 @@ export function useSpeechmaticsRecorder({
       setIsStarting(false);
       setIsPending(false);
       setIsRecording(false);
-      onErrorRef.current?.(currentError instanceof Error ? currentError.message : "錄音啟動失敗");
+      const message = currentError instanceof Error ? currentError.message : "錄音啟動失敗";
+      onErrorRef.current?.(toFriendlySpeechmaticsError(message, speechmaticsEndpointRef.current));
     }
   }
 
@@ -337,7 +356,8 @@ export function useSpeechmaticsRecorder({
 
     flushPcmFrames(true);
     void speechmaticsClientRef.current.stopRecognition().catch((currentError: unknown) => {
-      onErrorRef.current?.(currentError instanceof Error ? currentError.message : "結束實時轉寫失敗");
+      const message = currentError instanceof Error ? currentError.message : "結束實時轉寫失敗";
+      onErrorRef.current?.(toFriendlySpeechmaticsError(message, speechmaticsEndpointRef.current));
       setIsPending(false);
       closeSpeechmaticsClient();
     });
