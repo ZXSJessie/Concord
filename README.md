@@ -119,9 +119,6 @@ Copy-Item .env.example .env.local
 然後打開 `.env.local`，至少填寫：
 
 ```env
-NEXT_PUBLIC_APP_NAME=Concord
-NEXT_PUBLIC_ASR_PROVIDER=speechmatics
-
 AI_PROVIDER=dashscope
 AI_BASE_URL=https://dashscope-intl.aliyuncs.com/compatible-mode/v1
 AI_API_KEY=your_dashscope_api_key
@@ -130,7 +127,6 @@ AI_REPORT_MODEL=qwen-plus
 AI_ANALYSIS_TIMEOUT_MS=60000
 AI_REPORT_TIMEOUT_MS=90000
 
-ASR_PROVIDER=speechmatics
 SPEECHMATICS_API_KEY=your_speechmatics_api_key
 SPEECHMATICS_RT_URL=wss://eu2.rt.speechmatics.com/v2
 SPEECHMATICS_RT_LANGUAGE=yue

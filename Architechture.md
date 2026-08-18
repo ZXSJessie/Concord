@@ -5,26 +5,20 @@
 ```txt
 Concord
 ├─ server.mjs                         # 自定義 Node/Next 啟動入口
-├─ server/
-│  └─ asr-websocket.mjs               # Google ASR WebSocket 實時轉寫服務
 ├─ src/
 │  ├─ app/                            # Next.js App Router：頁面 + API
 │  │  ├─ page.tsx                     # 首頁：選擇長者
 │  │  ├─ report/[id]/page.tsx         # 報告頁面：某個長者的錄音/報告頁
 │  │  ├─ api/                         # 後端 HTTP API
 │  │  │  ├─ report/route.ts           # 生成護理報告 API
-│  │  │  ├─ asr/route.ts              # 上傳音頻轉文字 API
 │  │  │  ├─ speechmatics/token/route.ts # 獲取 Speechmatics 實時轉寫 token
-│  │  │  └─ health/google/route.ts    # Google 配置健康檢查
 │  │  └─ *.css                        # 頁面樣式
 │  ├─ components/                     # 前端組件
 │  │  └─ report-session.tsx           # 錄音、實時轉寫、生成報告的主要交互組件
 │  ├─ lib/                            # 通用邏輯/第三方服務封裝
-│  │  ├─ asr-client.ts                # Google Speech-to-Text 普通音頻轉寫
 │  │  ├─ speechmatics.ts              # Speechmatics token/config 封裝
-│  │  ├─ google-client.ts             # Google Speech/Gemini 客戶端
-│  │  ├─ report-ai.ts                 # 調 Gemini 生成結構化報告
-│  │  ├─ report-builder.ts            # 無 Google 配置時的本地規則報告生成
+│  │  ├─ llm-client.ts                # OpenAI-compatible LLM 客戶端封裝
+│  │  ├─ report-builder.ts            # 本地規則報告生成
 │  │  └─ demo-data.ts                 # 示例長者數據
 │  ├─ server/                         # 後端業務層
 │  │  ├─ services/                    # 服務邏輯
@@ -67,7 +61,7 @@ Concord
 
 [server.mjs](/Users/alicelong/Desktop/Concord/server.mjs)
 
-它負責啟動整個 Next.js 應用，並額外掛載 `/ws/asr` WebSocket 服務。
+它負責啟動整個 Next.js 應用。
 
 2. API 路由層
 
@@ -76,19 +70,10 @@ Concord
 - [src/app/api/report/route.ts](/Users/alicelong/Desktop/Concord/src/app/api/report/route.ts)  
   接收轉寫文本，生成護理報告。
 
-- [src/app/api/asr/route.ts](/Users/alicelong/Desktop/Concord/src/app/api/asr/route.ts)  
-  接收上傳音頻文件，調用 Google Speech-to-Text 轉文字。
-
 - `src/app/api/speechmatics/token/route.ts`  
   給前端實時轉寫生成 Speechmatics token。當前 `ReportSession` 主要用的是這個接口。
 
-- [src/app/api/health/google/route.ts](/Users/alicelong/Desktop/Concord/src/app/api/health/google/route.ts)  
-  檢查 Google Cloud / Speech / Gemini 配置是否正常。
-
 3. 業務服務層
-
-- [src/server/services/asr.ts](/Users/alicelong/Desktop/Concord/src/server/services/asr.ts)  
-  包裝音頻轉寫邏輯。
 
 - [src/server/services/report.ts](/Users/alicelong/Desktop/Concord/src/server/services/report.ts)  
   根據長者 ID 和轉寫文本生成報告。
@@ -98,20 +83,14 @@ Concord
 
 4. 第三方服務封裝層
 
-- [src/lib/google-client.ts](/Users/alicelong/Desktop/Concord/src/lib/google-client.ts)  
-  初始化 Google Speech 和 Gemini 客戶端。
-
-- [src/lib/asr-client.ts](/Users/alicelong/Desktop/Concord/src/lib/asr-client.ts)  
-  調 Google Speech-to-Text，把音頻文件轉文字。
-
 - `src/lib/speechmatics.ts`  
   生成 Speechmatics 實時轉寫 token。
 
-- [src/lib/report-ai.ts](/Users/alicelong/Desktop/Concord/src/lib/report-ai.ts)  
-  調 Gemini，根據轉寫文本生成結構化護理報告。
+- [src/lib/llm-client.ts](/Users/alicelong/Desktop/Concord/src/lib/llm-client.ts)  
+  調 OpenAI-compatible LLM（默認阿里百鍊，可換其他兼容服務），根據轉寫文本生成結構化護理報告。
 
 - [src/lib/report-builder.ts](/Users/alicelong/Desktop/Concord/src/lib/report-builder.ts)  
-  如果 Google 配置不存在，就用本地規則生成一個報告。
+  如果 LLM 配置不存在，就用本地規則生成一個報告。
 
 **當前主要數據流**
 
@@ -140,7 +119,7 @@ ReportSession 在瀏覽器啟動錄音
   ↓
 src/server/services/report.ts
   ↓
-src/lib/report-ai.ts 調 Gemini 或 fallback 到 report-builder
+src/lib/llm-client.ts 調 LLM 或 fallback 到 report-builder
   ↓
 返回結構化報告給前端展示
 ```

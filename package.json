@@ -10,8 +10,6 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@google-cloud/speech": "^7.3.0",
-    "@google/genai": "^1.50.1",
     "@speechmatics/auth": "^0.1.0",
     "@speechmatics/real-time-client": "^8.3.1",
     "@supabase/supabase-js": "^2.49.1",
@@ -19,7 +17,6 @@
     "next": "^14.2.24",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "ws": "^8.20.0",
     "xlsx": "^0.18.5",
     "zod": "^3.24.2"
   },
